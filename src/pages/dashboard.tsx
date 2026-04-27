@@ -24,6 +24,12 @@ export default function Dashboard() {
   const [tasks, setTasks] = useTasks();
   const [subjects] = useSubjects();
 
+  const subjectColorMap = useMemo(
+    () =>
+      Object.fromEntries(subjects.map((subject) => [subject.name, subject.color])),
+    [subjects]
+  );
+
   const todayKey = new Date().toISOString().split("T")[0];
 
   const totalTasks = tasks.length;
@@ -200,6 +206,7 @@ export default function Dashboard() {
                     title={task.title}
                     description={task.description}
                     subject={task.subject}
+                    subjectColor={subjectColorMap[task.subject]}
                     priority={task.priority}
                     dueDate={task.dueDate}
                     completed={task.completed}

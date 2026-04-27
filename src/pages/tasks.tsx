@@ -84,6 +84,14 @@ export default function Tasks() {
     [availableSubjects]
   );
 
+  const subjectColorMap = useMemo(
+    () =>
+      Object.fromEntries(
+        availableSubjects.map((subject) => [subject.name, subject.color])
+      ),
+    [availableSubjects]
+  );
+
   const openCreateTaskForm = () => {
     setFormData((currentForm) => ({
       ...currentForm,
@@ -403,6 +411,7 @@ export default function Tasks() {
                 title={task.title}
                 description={task.description}
                 subject={task.subject}
+                subjectColor={subjectColorMap[task.subject]}
                 priority={task.priority}
                 dueDate={task.dueDate}
                 completed={task.completed}

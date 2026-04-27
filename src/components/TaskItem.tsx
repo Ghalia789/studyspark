@@ -10,6 +10,7 @@ interface TaskItemProps {
   title: string;
   description?: string;
   subject?: string;
+  subjectColor?: string;
   priority?: "low" | "medium" | "high";
   dueDate?: string;
   completed?: boolean;
@@ -25,11 +26,28 @@ const priorityVariants = {
   high: "danger",
 } as const;
 
+const getReadableTextColor = (hexColor?: string) => {
+  if (!hexColor) return "#074F57";
+
+  const normalized = hexColor.replace("#", "");
+  const expanded = normalized.length === 3
+    ? normalized.split("").map((char) => char + char).join("")
+    : normalized;
+
+  const red = Number.parseInt(expanded.slice(0, 2), 16);
+  const green = Number.parseInt(expanded.slice(2, 4), 16);
+  const blue = Number.parseInt(expanded.slice(4, 6), 16);
+
+  const luminance = (red * 299 + green * 587 + blue * 114) / 1000;
+  return luminance > 150 ? "#074F57" : "#FFFFFF";
+};
+
 export default function TaskItem({
   id = "",
   title,
   description,
   subject,
+  subjectColor,
   priority = "medium",
   dueDate,
   completed = false,
@@ -44,7 +62,7 @@ export default function TaskItem({
       onClick={() => onToggle?.(id)}
     >
       {/* Checkbox */}
-      <div className="shrink-0 mt-1">
+      <div className="flex-none mt-1">
         <input
           type="checkbox"
           checked={completed}
@@ -74,7 +92,22 @@ export default function TaskItem({
 
         {/* Tags */}
         <div className="flex flex-wrap gap-2 mt-3">
-          {subject && <Badge size="sm" variant="info">{subject}</Badge>}
+          {subject && (
+            <Badge
+              size="sm"
+              variant="default"
+              style={
+                subjectColor
+                  ? {
+                      backgroundColor: `${subjectColor}20`,
+                      color: getReadableTextColor(subjectColor),
+                    }
+                  : undefined
+              }
+            >
+              {subject}
+            </Badge>
+          )}
           {priority && (
             <Badge size="sm" variant={priorityVariants[priority]}>
               {priority.charAt(0).toUpperCase() + priority.slice(1)}
@@ -84,7 +117,7 @@ export default function TaskItem({
       </div>
 
       {/* Right side: Due date & Actions */}
-      <div className="shrink-0 flex flex-col items-end gap-2">
+      <div className="flex-none flex flex-col items-end gap-2">
         {dueDate && (
           <span className="text-xs font-medium text-muted">{dueDate}</span>
         )}

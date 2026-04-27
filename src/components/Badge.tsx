@@ -8,14 +8,15 @@ interface BadgeProps {
   size?: "sm" | "md";
   onRemove?: () => void;
   className?: string;
+  style?: React.CSSProperties;
 }
 
 const variantStyles = {
   default: "bg-primary-soft text-primary",
-  success: "bg-success bg-opacity-20 text-success",
-  warning: "bg-warning bg-opacity-20 text-warning",
-  danger: "bg-danger bg-opacity-20 text-danger",
-  info: "bg-base bg-opacity-20 text-base",
+  success: "bg-success/20 text-success dark:bg-success/25",
+  warning: "bg-warning/20 text-warning dark:bg-warning/25",
+  danger: "bg-danger/20 text-danger dark:bg-danger/25",
+  info: "bg-base/15 text-base dark:bg-base/20",
 };
 
 const sizeStyles = {
@@ -29,10 +30,12 @@ export default function Badge({
   size = "sm",
   onRemove,
   className = "",
+  style,
 }: BadgeProps) {
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-full font-semibold transition-all duration-200 ${variantStyles[variant]} ${sizeStyles[size]} ${className}`}
+      style={style}
+      className={`inline-flex items-center gap-1.5 rounded-full font-semibold whitespace-nowrap transition-all duration-200 ${variantStyles[variant]} ${sizeStyles[size]} ${className}`}
     >
       {children}
       {onRemove && (
