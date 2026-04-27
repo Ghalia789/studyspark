@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
-import { Plus, Filter } from "lucide-react";
+import React, { useMemo, useState } from "react";
+import { Plus, Filter, Search, ArrowUpDown, X } from "lucide-react";
 import TaskItem from "@/components/TaskItem";
 import Button from "@/components/Button";
 import Modal from "@/components/Modal";
@@ -12,6 +12,27 @@ import Badge from "@/components/Badge";
 import Alert from "@/components/Alert";
 import EmptyState from "@/components/EmptyState";
 import { useTasks, type Task } from "@/hooks";
+
+type SortOption =
+  | "dueDate-asc"
+  | "dueDate-desc"
+  | "priority"
+  | "subject"
+  | "title";
+
+const priorityRank = {
+  high: 0,
+  medium: 1,
+  low: 2,
+} as const;
+
+const sortOptions: { value: SortOption; label: string }[] = [
+  { value: "dueDate-asc", label: "Due Date: Soonest" },
+  { value: "dueDate-desc", label: "Due Date: Latest" },
+  { value: "priority", label: "Priority" },
+  { value: "subject", label: "Subject" },
+  { value: "title", label: "Title" },
+];
 
 export default function Tasks() {
   const [tasks, setTasks] = useTasks();
@@ -34,17 +55,81 @@ export default function Tasks() {
   const [filterPriority, setFilterPriority] = useState<string>("");
   const [filterSubject, setFilterSubject] = useState<string>("");
   const [showCompleted, setShowCompleted] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState<SortOption>("dueDate-asc");
 
   // Get unique subjects for filter
   const subjects = Array.from(new Set(tasks.map((t) => t.subject)));
 
-  // Filter tasks
-  const filteredTasks = tasks.filter((task) => {
-    if (!showCompleted && task.completed) return false;
-    if (filterPriority && task.priority !== filterPriority) return false;
-    if (filterSubject && task.subject !== filterSubject) return false;
-    return true;
-  });
+  const filteredTasks = useMemo(() => {
+    const normalizedQuery = searchQuery.trim().toLowerCase();
+
+    const matchesSearch = (task: Task) => {
+      if (!normalizedQuery) return true;
+
+      return [task.title, task.description, task.subject].some((value) =>
+        value.toLowerCase().includes(normalizedQuery)
+      );
+    };
+
+    const matchesFilters = (task: Task) => {
+      if (!showCompleted && task.completed) return false;
+      if (filterPriority && task.priority !== filterPriority) return false;
+      if (filterSubject && task.subject !== filterSubject) return false;
+      return matchesSearch(task);
+    };
+
+    const compareDueDates = (a: Task, b: Task) => {
+      const aTime = Date.parse(a.dueDate);
+      const bTime = Date.parse(b.dueDate);
+      const aValid = !Number.isNaN(aTime);
+      const bValid = !Number.isNaN(bTime);
+
+      if (!aValid && !bValid) return 0;
+      if (!aValid) return 1;
+      if (!bValid) return -1;
+
+      return aTime - bTime;
+    };
+
+    const compareTasks = (a: Task, b: Task) => {
+      switch (sortBy) {
+        case "dueDate-desc": {
+          return -compareDueDates(a, b);
+        }
+        case "priority": {
+          return priorityRank[a.priority] - priorityRank[b.priority];
+        }
+        case "subject": {
+          return a.subject.localeCompare(b.subject);
+        }
+        case "title": {
+          return a.title.localeCompare(b.title);
+        }
+        case "dueDate-asc":
+        default: {
+          return compareDueDates(a, b);
+        }
+      }
+    };
+
+    return tasks.filter(matchesFilters).sort(compareTasks);
+  }, [tasks, searchQuery, filterPriority, filterSubject, showCompleted, sortBy]);
+
+  const activeFilterCount = [
+    searchQuery,
+    filterPriority,
+    filterSubject,
+    !showCompleted ? "hidden-completed" : "",
+  ].filter(Boolean).length;
+
+  const clearFilters = () => {
+    setSearchQuery("");
+    setFilterPriority("");
+    setFilterSubject("");
+    setShowCompleted(true);
+    setSortBy("dueDate-asc");
+  };
 
   const handleCreateTask = () => {
     if (!formData.title.trim()) {
@@ -163,12 +248,33 @@ export default function Tasks() {
         )}
 
         {/* Filters */}
-        <div className="bg-card dark:bg-card rounded-lg p-6 mb-8 border border-gray-200 dark:border-gray-700">
-          <div className="flex items-center gap-2 mb-4">
-            <Filter size={18} className="text-primary" />
-            <h3 className="font-semibold">Filters</h3>
+        <div className="bg-card dark:bg-card rounded-2xl p-6 mb-8 border border-gray-200/80 dark:border-gray-700/80 shadow-sm">
+          <div className="flex items-center justify-between gap-4 mb-4">
+            <div className="flex items-center gap-2">
+              <Filter size={18} className="text-primary" />
+              <h3 className="font-semibold">Advanced Filters</h3>
+            </div>
+            {activeFilterCount > 0 && (
+              <Button variant="secondary" size="sm" onClick={clearFilters}>
+                <X size={14} />
+                Clear Filters
+              </Button>
+            )}
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-5 gap-4">
+            <div className="xl:col-span-2">
+              <Input
+                label="Search Tasks"
+                placeholder="Search title, description, or subject"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              <p className="mt-2 flex items-center gap-2 text-xs text-muted">
+                <Search size={14} />
+                Search matches task titles, descriptions, and subjects.
+              </p>
+            </div>
+
             <Select
               label="Filter by Priority"
               placeholder="All priorities"
@@ -187,23 +293,41 @@ export default function Tasks() {
               value={filterSubject}
               onChange={setFilterSubject}
             />
-            <div className="flex items-end">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={showCompleted}
-                  onChange={(e) => setShowCompleted(e.target.checked)}
-                  className="w-4 h-4 rounded accent-primary"
-                />
-                <span className="text-sm font-medium">Show Completed</span>
-              </label>
-            </div>
+            <Select
+              label="Sort By"
+              options={sortOptions}
+              value={sortBy}
+              onChange={(value) => setSortBy(value as SortOption)}
+            />
+          </div>
+
+          <div className="mt-4 flex flex-wrap items-center gap-4 rounded-xl bg-bg/70 dark:bg-bg/40 px-4 py-3 text-sm text-muted">
+            <span className="flex items-center gap-2">
+              <ArrowUpDown size={14} />
+              Sorted by: {sortOptions.find((option) => option.value === sortBy)?.label}
+            </span>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={showCompleted}
+                onChange={(e) => setShowCompleted(e.target.checked)}
+                className="w-4 h-4 rounded accent-primary"
+              />
+              <span className="font-medium text-text dark:text-text">
+                Show Completed
+              </span>
+            </label>
           </div>
         </div>
 
         {/* Task Stats */}
         {filteredTasks.length > 0 && (
           <div className="flex gap-2 mb-6 flex-wrap">
+            {searchQuery && (
+              <Badge onRemove={() => setSearchQuery("")} variant="default">
+                Search: {searchQuery}
+              </Badge>
+            )}
             {filterPriority && (
               <Badge
                 onRemove={() => setFilterPriority("")}
@@ -221,6 +345,16 @@ export default function Tasks() {
             {filterSubject && (
               <Badge onRemove={() => setFilterSubject("")} variant="info">
                 Subject: {filterSubject}
+              </Badge>
+            )}
+            {sortBy !== "dueDate-asc" && (
+              <Badge onRemove={() => setSortBy("dueDate-asc")} variant="default">
+                Sort: {sortOptions.find((option) => option.value === sortBy)?.label}
+              </Badge>
+            )}
+            {!showCompleted && (
+              <Badge onRemove={() => setShowCompleted(true)} variant="warning">
+                Hidden Completed
               </Badge>
             )}
           </div>
@@ -251,11 +385,11 @@ export default function Tasks() {
             description={
               tasks.length === 0
                 ? "Create your first task to get started"
-                : "No tasks match your filters"
+                : "No tasks match your search, filters, or sort settings"
             }
             action={{
-              label: "Create Task",
-              onClick: () => setIsCreateModalOpen(true),
+              label: tasks.length === 0 ? "Create Task" : "Clear Filters",
+              onClick: tasks.length === 0 ? () => setIsCreateModalOpen(true) : clearFilters,
             }}
           />
         )}
