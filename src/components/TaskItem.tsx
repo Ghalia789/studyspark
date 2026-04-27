@@ -40,11 +40,11 @@ export default function TaskItem({
 }: TaskItemProps) {
   return (
     <Card
-      className={`flex items-start gap-4 hover:shadow-lg cursor-pointer transition-all ${className}`}
+      className={`group flex items-start gap-4 cursor-pointer border-l-4 border-l-primary/20 hover:border-l-primary hover:shadow-xl transition-all ${className}`}
       onClick={() => onToggle?.(id)}
     >
       {/* Checkbox */}
-      <div className="flex-shrink-0 mt-1">
+      <div className="shrink-0 mt-1">
         <input
           type="checkbox"
           checked={completed}
@@ -84,7 +84,7 @@ export default function TaskItem({
       </div>
 
       {/* Right side: Due date & Actions */}
-      <div className="flex-shrink-0 flex flex-col items-end gap-2">
+      <div className="shrink-0 flex flex-col items-end gap-2">
         {dueDate && (
           <span className="text-xs font-medium text-muted">{dueDate}</span>
         )}
@@ -97,7 +97,7 @@ export default function TaskItem({
                 e.stopPropagation();
                 onEdit(id);
               }}
-              className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+              className="rounded-xl p-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
               aria-label="Edit task"
             >
               <Edit2 size={16} className="text-muted" />
@@ -109,7 +109,7 @@ export default function TaskItem({
                 e.stopPropagation();
                 onDelete(id);
               }}
-              className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900 dark:hover:bg-opacity-20 rounded transition-colors"
+              className="rounded-xl p-2 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger/30"
               aria-label="Delete task"
             >
               <Trash2 size={16} className="text-danger" />

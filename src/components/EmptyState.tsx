@@ -22,7 +22,7 @@ export default function EmptyState({
 }: EmptyStateProps) {
   return (
     <div
-      className={`flex flex-col items-center justify-center py-12 px-4 text-center ${className}`}
+      className={`flex flex-col items-center justify-center rounded-3xl border border-dashed border-gray-200/80 bg-card/70 px-6 py-14 text-center shadow-sm dark:border-gray-700/80 ${className}`}
     >
       {/* Illustration */}
       {illustration && (
@@ -46,7 +46,7 @@ export default function EmptyState({
       {action && (
         <button
           onClick={action.onClick}
-          className="px-6 py-2 bg-primary text-white rounded-lg font-medium hover:bg-opacity-90 transition-all duration-200"
+          className="inline-flex items-center justify-center rounded-xl bg-primary px-6 py-3 font-semibold text-white shadow-sm shadow-primary/20 transition-all duration-200 hover:bg-primary/90 hover:shadow-md"
         >
           {action.label}
         </button>

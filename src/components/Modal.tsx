@@ -2,7 +2,6 @@
 
 import React, { useEffect } from "react";
 import { X } from "lucide-react";
-import Button from "./Button";
 
 interface ModalProps {
   isOpen: boolean;
@@ -49,7 +48,7 @@ export default function Modal({
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity duration-200"
+        className="fixed inset-0 z-40 bg-black/50 backdrop-blur-[2px] transition-opacity duration-200"
         onClick={onClose}
         aria-hidden="true"
       />
@@ -57,7 +56,7 @@ export default function Modal({
       {/* Modal */}
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
         <div
-          className={`bg-card dark:bg-card text-text dark:text-text rounded-lg shadow-lg w-full ${sizeStyles[size]} max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in duration-200 ${className}`}
+          className={`bg-card dark:bg-card text-text dark:text-text rounded-3xl shadow-2xl shadow-black/20 border border-gray-200/80 dark:border-gray-700/80 w-full ${sizeStyles[size]} max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in duration-200 ${className}`}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
@@ -69,7 +68,7 @@ export default function Modal({
               {closeButton && (
                 <button
                   onClick={onClose}
-                  className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
                   aria-label="Close modal"
                 >
                   <X size={20} className="text-muted" />

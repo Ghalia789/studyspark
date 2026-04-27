@@ -55,10 +55,10 @@ export default function Alert({
 
   return (
     <div
-      className={`flex items-start gap-3 p-4 rounded-lg border ${typeStyles[type]} ${className}`}
+      className={`flex items-start gap-3 rounded-2xl border p-4 shadow-sm ${typeStyles[type]} ${className}`}
       role="alert"
     >
-      <Icon size={20} className="flex-shrink-0 mt-0.5" />
+      <Icon size={20} className="shrink-0 mt-0.5" />
 
       <div className="flex-1">
         <p className="text-sm font-medium">{message}</p>

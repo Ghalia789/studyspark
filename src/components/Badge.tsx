@@ -32,13 +32,14 @@ export default function Badge({
 }: BadgeProps) {
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded-full font-medium transition-all duration-200 ${variantStyles[variant]} ${sizeStyles[size]} ${className}`}
+      className={`inline-flex items-center gap-1.5 rounded-full font-semibold transition-all duration-200 ${variantStyles[variant]} ${sizeStyles[size]} ${className}`}
     >
       {children}
       {onRemove && (
         <button
+          type="button"
           onClick={onRemove}
-          className="ml-1 hover:opacity-70 transition-opacity"
+          className="ml-1 inline-flex h-4 w-4 items-center justify-center rounded-full hover:opacity-70 transition-opacity"
           aria-label="Remove badge"
         >
           ×
