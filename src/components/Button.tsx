@@ -16,7 +16,7 @@ const variantStyles = {
   primary:
     "bg-primary text-white shadow-sm shadow-primary/20 hover:bg-primary/90 hover:shadow-md hover:shadow-primary/25",
   secondary:
-    "bg-gray-100 text-text hover:bg-gray-200 dark:bg-gray-700 dark:text-text dark:hover:bg-gray-600",
+    "border border-gray-300 bg-white text-base shadow-sm hover:bg-primary/5 hover:border-primary/40 dark:border-gray-600 dark:bg-gray-800 dark:text-text dark:hover:bg-gray-700",
   danger:
     "bg-danger text-white shadow-sm shadow-danger/20 hover:bg-danger/90 hover:shadow-md hover:shadow-danger/25",
   success:
