@@ -94,6 +94,28 @@ Run ESLint:
 npm run lint
 ```
 
+## Docker
+
+- **Build image**
+
+```bash
+docker build -t studyspark:latest .
+```
+
+- **Run (using an env file)**
+
+Create a local `.env` (copy from `.env.example`) and then:
+
+```bash
+docker run -p 3000:3000 --env-file .env -e PORT=3000 studyspark:latest
+```
+
+- **Notes**
+
+- The repo ignores `.env` and `.env.local` files; provide runtime envs via `--env-file`, `-e`, or Docker secrets.
+- The Dockerfile uses the Next.js `standalone` output (see `next.config.ts`). The container runs `node server.js` from the standalone build.
+
+
 ## Development
 
 The application uses TypeScript for type safety and Tailwind CSS for styling. All components are built with React and organized in the `src/components` directory. Pages are managed in the `src/pages` directory using Next.js Pages Router.
