@@ -11,7 +11,7 @@ import Select from "@/components/Select";
 import Badge from "@/components/Badge";
 import Alert from "@/components/Alert";
 import EmptyState from "@/components/EmptyState";
-import { useTasks, type Task } from "@/hooks";
+import { useTasks, useSubjects, type Task } from "@/hooks";
 
 type SortOption =
   | "dueDate-asc"
@@ -36,6 +36,7 @@ const sortOptions: { value: SortOption; label: string }[] = [
 
 export default function Tasks() {
   const [tasks, setTasks] = useTasks();
+  const [availableSubjects] = useSubjects();
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
@@ -59,7 +60,7 @@ export default function Tasks() {
   const [sortBy, setSortBy] = useState<SortOption>("dueDate-asc");
   const deferredSearchQuery = useDeferredValue(searchQuery);
 
-  const subjects = useMemo(
+  const filterSubjects = useMemo(
     () => Array.from(new Set(tasks.map((t) => t.subject))).sort((a, b) => a.localeCompare(b)),
     [tasks]
   );
@@ -73,6 +74,28 @@ export default function Tasks() {
     () => sortOptions.find((option) => option.value === sortBy)?.label,
     [sortBy]
   );
+
+  const subjectOptions = useMemo(
+    () =>
+      availableSubjects.map((subject) => ({
+        value: subject.name,
+        label: subject.name,
+      })),
+    [availableSubjects]
+  );
+
+  const openCreateTaskForm = () => {
+    setFormData((currentForm) => ({
+      ...currentForm,
+      title: "",
+      description: "",
+      subject: availableSubjects[0]?.name ?? "",
+      priority: "medium",
+      dueDate: "",
+    }));
+    setEditingTask(null);
+    setIsCreateModalOpen(true);
+  };
 
   const filteredTasks = useMemo(() => {
     const normalizedQuery = deferredSearchQuery.trim().toLowerCase();
@@ -144,6 +167,11 @@ export default function Tasks() {
       return;
     }
 
+    if (!formData.subject.trim()) {
+      setAlert({ message: "Please choose a subject", type: "error" });
+      return;
+    }
+
     const newTask: Task = {
       id: crypto.randomUUID(),
       title: formData.title,
@@ -154,7 +182,7 @@ export default function Tasks() {
       completed: false,
     };
 
-    setTasks([newTask, ...tasks]);
+    setTasks((currentTasks) => [newTask, ...currentTasks]);
     resetForm();
     setAlert({ message: "Task created successfully!", type: "success" });
   };
@@ -165,8 +193,8 @@ export default function Tasks() {
       return;
     }
 
-    setTasks(
-      tasks.map((task) =>
+    setTasks((currentTasks) =>
+      currentTasks.map((task) =>
         task.id === editingTask.id
           ? {
               ...task,
@@ -184,13 +212,13 @@ export default function Tasks() {
   };
 
   const handleDeleteTask = (id: string) => {
-    setTasks(tasks.filter((task) => task.id !== id));
+    setTasks((currentTasks) => currentTasks.filter((task) => task.id !== id));
     setAlert({ message: "Task deleted", type: "success" });
   };
 
   const handleToggleTask = (id: string) => {
-    setTasks(
-      tasks.map((task) =>
+    setTasks((currentTasks) =>
+      currentTasks.map((task) =>
         task.id === id ? { ...task, completed: !task.completed } : task
       )
     );
@@ -215,7 +243,7 @@ export default function Tasks() {
     setFormData({
       title: "",
       description: "",
-      subject: "",
+      subject: availableSubjects[0]?.name ?? "",
       priority: "medium",
       dueDate: "",
     });
@@ -234,7 +262,7 @@ export default function Tasks() {
               {completedCount} of {tasks.length} tasks completed
             </p>
           </div>
-          <Button onClick={() => setIsCreateModalOpen(true)} size="lg">
+          <Button onClick={openCreateTaskForm} size="lg">
             <Plus size={20} className="mr-2" />
             Create Task
           </Button>
@@ -294,7 +322,7 @@ export default function Tasks() {
             <Select
               label="Filter by Subject"
               placeholder="All subjects"
-              options={subjects.map((s) => ({ value: s, label: s }))}
+              options={filterSubjects.map((subject) => ({ value: subject, label: subject }))}
               value={filterSubject}
               onChange={setFilterSubject}
             />
@@ -438,14 +466,21 @@ export default function Tasks() {
               rows={3}
             />
             <div className="grid grid-cols-2 gap-4">
-              <Input
+              <Select
                 label="Subject"
-                placeholder="e.g., Math"
+                placeholder="Choose a subject"
+                options={subjectOptions}
                 value={formData.subject}
-                onChange={(e) =>
-                  setFormData({ ...formData, subject: e.target.value })
+                onChange={(value) =>
+                  setFormData({ ...formData, subject: value })
                 }
+                disabled={availableSubjects.length === 0}
               />
+              {availableSubjects.length === 0 && (
+                <p className="text-xs text-muted col-span-2">
+                  Create subjects first on the Subjects page so tasks can be assigned cleanly.
+                </p>
+              )}
               <Select
                 label="Priority"
                 options={[

@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useMemo } from "react";
 import Link from "next/link";
 import { useTasks, useSubjects } from "@/hooks";
 import {
@@ -10,6 +10,10 @@ import {
   TrendingUp,
   ArrowRight,
   Plus,
+  CalendarDays,
+  Flame,
+  Target,
+  Activity,
 } from "lucide-react";
 import StatCard from "@/components/StatCard";
 import Card from "@/components/Card";
@@ -20,41 +24,79 @@ export default function Dashboard() {
   const [tasks, setTasks] = useTasks();
   const [subjects] = useSubjects();
 
-  // Calculate statistics
+  const todayKey = new Date().toISOString().split("T")[0];
+
   const totalTasks = tasks.length;
-  const completedTasks = tasks.filter((t) => t.completed).length;
+  const completedTasks = useMemo(
+    () => tasks.filter((task) => task.completed).length,
+    [tasks]
+  );
   const pendingTasks = totalTasks - completedTasks;
   const completionPercentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
-  // Get upcoming tasks (next 5, sorted by due date)
-  const upcomingTasks = tasks
-    .filter((t) => !t.completed)
-    .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
-    .slice(0, 5);
+  const parseDateKey = (value: string) => {
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString().split("T")[0];
+  };
 
-  // Get subject statistics
-  const subjectStats = subjects.map((subject) => {
-    const subjectTasks = tasks.filter((t) => t.subject === subject.name);
-    const completedSubjectTasks = subjectTasks.filter((t) => t.completed).length;
-    return {
-      name: subject.name,
-      color: subject.color,
-      total: subjectTasks.length,
-      completed: completedSubjectTasks,
-      pending: subjectTasks.length - completedSubjectTasks,
-    };
-  });
+  const overdueTasks = useMemo(
+    () =>
+      tasks.filter((task) => {
+        const taskDate = parseDateKey(task.dueDate);
+        return !task.completed && taskDate !== null && taskDate < todayKey;
+      }),
+    [tasks, todayKey]
+  );
+
+  const dueTodayTasks = useMemo(
+    () =>
+      tasks.filter((task) => {
+        const taskDate = parseDateKey(task.dueDate);
+        return !task.completed && taskDate === todayKey;
+      }),
+    [tasks, todayKey]
+  );
+
+  const upcomingTasks = useMemo(
+    () =>
+      tasks
+        .filter((task) => !task.completed)
+        .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
+        .slice(0, 5),
+    [tasks]
+  );
+
+  const recentTasks = useMemo(
+    () => tasks.slice(0, 4),
+    [tasks]
+  );
+
+  const subjectStats = useMemo(
+    () =>
+      subjects.map((subject) => {
+        const subjectTasks = tasks.filter((task) => task.subject === subject.name);
+        const completedSubjectTasks = subjectTasks.filter((task) => task.completed).length;
+        return {
+          name: subject.name,
+          color: subject.color,
+          total: subjectTasks.length,
+          completed: completedSubjectTasks,
+          pending: subjectTasks.length - completedSubjectTasks,
+        };
+      }),
+    [subjects, tasks]
+  );
 
   const handleToggleTask = (id: string) => {
-    setTasks(
-      tasks.map((task) =>
+    setTasks((currentTasks) =>
+      currentTasks.map((task) =>
         task.id === id ? { ...task, completed: !task.completed } : task
       )
     );
   };
 
   const handleDeleteTask = (id: string) => {
-    setTasks(tasks.filter((task) => task.id !== id));
+    setTasks((currentTasks) => currentTasks.filter((task) => task.id !== id));
   };
 
   return (
@@ -94,6 +136,46 @@ export default function Dashboard() {
             icon={<TrendingUp />}
             color="info"
           />
+        </div>
+
+        {/* Study Pulse */}
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-12">
+          <Card className="flex items-center gap-4">
+            <div className="p-3 rounded-xl bg-warning/10 text-warning">
+              <CalendarDays size={22} />
+            </div>
+            <div>
+              <p className="text-2xl font-bold">{dueTodayTasks.length}</p>
+              <p className="text-sm text-muted">Due today</p>
+            </div>
+          </Card>
+          <Card className="flex items-center gap-4">
+            <div className="p-3 rounded-xl bg-danger/10 text-danger">
+              <Flame size={22} />
+            </div>
+            <div>
+              <p className="text-2xl font-bold">{overdueTasks.length}</p>
+              <p className="text-sm text-muted">Overdue</p>
+            </div>
+          </Card>
+          <Card className="flex items-center gap-4">
+            <div className="p-3 rounded-xl bg-primary/10 text-primary">
+              <Target size={22} />
+            </div>
+            <div>
+              <p className="text-2xl font-bold">{pendingTasks}</p>
+              <p className="text-sm text-muted">Active tasks</p>
+            </div>
+          </Card>
+          <Card className="flex items-center gap-4">
+            <div className="p-3 rounded-xl bg-info/10 text-info">
+              <Activity size={22} />
+            </div>
+            <div>
+              <p className="text-2xl font-bold">{subjects.length}</p>
+              <p className="text-sm text-muted">Subjects tracked</p>
+            </div>
+          </Card>
         </div>
 
         {/* Main Content Grid */}
@@ -183,6 +265,79 @@ export default function Dashboard() {
               )}
             </div>
           </div>
+        </div>
+
+        {/* Recent Activity */}
+        <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <Card>
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h3 className="text-xl font-bold">Recent Tasks</h3>
+                <p className="text-sm text-muted">Your latest work, newest first.</p>
+              </div>
+              <Link href="/tasks">
+                <Button variant="secondary" size="sm">
+                  View all
+                </Button>
+              </Link>
+            </div>
+
+            {recentTasks.length > 0 ? (
+              <div className="space-y-3">
+                {recentTasks.map((task) => (
+                  <div
+                    key={task.id}
+                    className="flex items-center justify-between rounded-xl border border-gray-200/80 dark:border-gray-700/80 px-4 py-3"
+                  >
+                    <div>
+                      <p className="font-medium">{task.title}</p>
+                      <p className="text-xs text-muted">
+                        {task.subject} • {task.priority} priority
+                      </p>
+                    </div>
+                    <span className={`text-xs font-semibold ${task.completed ? "text-success" : "text-warning"}`}>
+                      {task.completed ? "Completed" : "Open"}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-muted">No recent tasks yet.</p>
+            )}
+          </Card>
+
+          <Card>
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h3 className="text-xl font-bold">This Week</h3>
+                <p className="text-sm text-muted">Tasks due in the next few days.</p>
+              </div>
+              <Link href="/today">
+                <Button variant="secondary" size="sm">
+                  Open Today
+                </Button>
+              </Link>
+            </div>
+
+            {upcomingTasks.length > 0 ? (
+              <div className="space-y-3">
+                {upcomingTasks.slice(0, 3).map((task) => (
+                  <div
+                    key={task.id}
+                    className="flex items-center justify-between rounded-xl bg-bg/60 dark:bg-bg/40 px-4 py-3"
+                  >
+                    <div>
+                      <p className="font-medium">{task.title}</p>
+                      <p className="text-xs text-muted">{task.subject}</p>
+                    </div>
+                    <p className="text-xs font-semibold text-muted">{task.dueDate}</p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-muted">Nothing scheduled this week.</p>
+            )}
+          </Card>
         </div>
 
         {/* Quick Actions */}
