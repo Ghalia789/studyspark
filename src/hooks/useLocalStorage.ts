@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { Dispatch, SetStateAction, useState } from 'react';
 
 /**
  * Custom hook for managing localStorage
@@ -7,7 +7,10 @@ import { useState } from 'react';
  * @param initialValue - The initial value if key doesn't exist
  * @returns [storedValue, setValue]
  */
-export function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T) => void] {
+export function useLocalStorage<T>(
+  key: string,
+  initialValue: T
+): [T, Dispatch<SetStateAction<T>>] {
   // State to store our value
   const [storedValue, setStoredValue] = useState<T>(() => {
     // Initialize from localStorage on first render (client-side only)
@@ -26,18 +29,20 @@ export function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T)
 
   // Return a wrapped version of useState's setter function that
   // persists the new value to localStorage
-  const setValue = (value: T | ((val: T) => T)) => {
+  const setValue: Dispatch<SetStateAction<T>> = (value) => {
     try {
-      // Allow value to be a function so we have same API as useState
-      const valueToStore = typeof value === 'function' ? (value as (val: T) => T)(storedValue) : value;
-      
-      // Save state
-      setStoredValue(valueToStore);
-      
-      // Save to localStorage if in browser
-      if (typeof window !== 'undefined') {
-        window.localStorage.setItem(key, JSON.stringify(valueToStore));
-      }
+      setStoredValue((currentValue) => {
+        const valueToStore =
+          typeof value === 'function'
+            ? (value as (val: T) => T)(currentValue)
+            : value;
+
+        if (typeof window !== 'undefined') {
+          window.localStorage.setItem(key, JSON.stringify(valueToStore));
+        }
+
+        return valueToStore;
+      });
     } catch (error) {
       console.log(error);
     }

@@ -1,3 +1,4 @@
+import { Dispatch, SetStateAction } from 'react';
 import { useLocalStorage } from './useLocalStorage';
 
 export interface Subject {
@@ -38,6 +39,6 @@ const DEFAULT_SUBJECTS: Subject[] = [
  * Custom hook for managing subjects with localStorage persistence
  * @returns [subjects, setSubjects]
  */
-export function useSubjects(): [Subject[], (subjects: Subject[]) => void] {
+export function useSubjects(): [Subject[], Dispatch<SetStateAction<Subject[]>>] {
   return useLocalStorage<Subject[]>('studyspark_subjects', DEFAULT_SUBJECTS);
 }

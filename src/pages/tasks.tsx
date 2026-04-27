@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useDeferredValue, useMemo, useState } from "react";
 import { Plus, Filter, Search, ArrowUpDown, X } from "lucide-react";
 import TaskItem from "@/components/TaskItem";
 import Button from "@/components/Button";
@@ -57,71 +57,78 @@ export default function Tasks() {
   const [showCompleted, setShowCompleted] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<SortOption>("dueDate-asc");
+  const deferredSearchQuery = useDeferredValue(searchQuery);
 
-  // Get unique subjects for filter
-  const subjects = Array.from(new Set(tasks.map((t) => t.subject)));
+  const subjects = useMemo(
+    () => Array.from(new Set(tasks.map((t) => t.subject))).sort((a, b) => a.localeCompare(b)),
+    [tasks]
+  );
+
+  const completedCount = useMemo(
+    () => tasks.filter((task) => task.completed).length,
+    [tasks]
+  );
+
+  const activeSortLabel = useMemo(
+    () => sortOptions.find((option) => option.value === sortBy)?.label,
+    [sortBy]
+  );
 
   const filteredTasks = useMemo(() => {
-    const normalizedQuery = searchQuery.trim().toLowerCase();
+    const normalizedQuery = deferredSearchQuery.trim().toLowerCase();
 
-    const matchesSearch = (task: Task) => {
+    const filtered = tasks.filter((task) => {
+      if (!showCompleted && task.completed) return false;
+      if (filterPriority && task.priority !== filterPriority) return false;
+      if (filterSubject && task.subject !== filterSubject) return false;
+
       if (!normalizedQuery) return true;
 
       return [task.title, task.description, task.subject].some((value) =>
         value.toLowerCase().includes(normalizedQuery)
       );
-    };
+    });
 
-    const matchesFilters = (task: Task) => {
-      if (!showCompleted && task.completed) return false;
-      if (filterPriority && task.priority !== filterPriority) return false;
-      if (filterSubject && task.subject !== filterSubject) return false;
-      return matchesSearch(task);
-    };
-
-    const compareDueDates = (a: Task, b: Task) => {
+    const sortByDueDate = (a: Task, b: Task, direction: 1 | -1) => {
       const aTime = Date.parse(a.dueDate);
       const bTime = Date.parse(b.dueDate);
-      const aValid = !Number.isNaN(aTime);
-      const bValid = !Number.isNaN(bTime);
+      const aValid = Number.isFinite(aTime);
+      const bValid = Number.isFinite(bTime);
 
       if (!aValid && !bValid) return 0;
       if (!aValid) return 1;
       if (!bValid) return -1;
 
-      return aTime - bTime;
+      return (aTime - bTime) * direction;
     };
 
-    const compareTasks = (a: Task, b: Task) => {
+    return filtered.sort((a, b) => {
       switch (sortBy) {
-        case "dueDate-desc": {
-          return -compareDueDates(a, b);
-        }
-        case "priority": {
+        case "dueDate-desc":
+          return sortByDueDate(a, b, -1);
+        case "priority":
           return priorityRank[a.priority] - priorityRank[b.priority];
-        }
-        case "subject": {
+        case "subject":
           return a.subject.localeCompare(b.subject);
-        }
-        case "title": {
+        case "title":
           return a.title.localeCompare(b.title);
-        }
         case "dueDate-asc":
-        default: {
-          return compareDueDates(a, b);
-        }
+        default:
+          return sortByDueDate(a, b, 1);
       }
-    };
+    });
+  }, [tasks, deferredSearchQuery, filterPriority, filterSubject, showCompleted, sortBy]);
 
-    return tasks.filter(matchesFilters).sort(compareTasks);
-  }, [tasks, searchQuery, filterPriority, filterSubject, showCompleted, sortBy]);
-
-  const activeFilterCount = [
-    searchQuery,
-    filterPriority,
-    filterSubject,
-    !showCompleted ? "hidden-completed" : "",
-  ].filter(Boolean).length;
+  const activeFilterCount = useMemo(
+    () =>
+      [
+        searchQuery,
+        filterPriority,
+        filterSubject,
+        !showCompleted ? "hidden-completed" : "",
+      ].filter(Boolean).length,
+    [searchQuery, filterPriority, filterSubject, showCompleted]
+  );
 
   const clearFilters = () => {
     setSearchQuery("");
@@ -216,8 +223,6 @@ export default function Tasks() {
     setIsCreateModalOpen(false);
   };
 
-  const completedCount = tasks.filter((t) => t.completed).length;
-
   return (
     <div className="min-h-screen bg-bg dark:bg-bg text-text dark:text-text p-8">
       <div className="max-w-6xl mx-auto">
@@ -304,7 +309,7 @@ export default function Tasks() {
           <div className="mt-4 flex flex-wrap items-center gap-4 rounded-xl bg-bg/70 dark:bg-bg/40 px-4 py-3 text-sm text-muted">
             <span className="flex items-center gap-2">
               <ArrowUpDown size={14} />
-              Sorted by: {sortOptions.find((option) => option.value === sortBy)?.label}
+              Sorted by: {activeSortLabel}
             </span>
             <label className="flex items-center gap-2 cursor-pointer">
               <input
@@ -349,7 +354,7 @@ export default function Tasks() {
             )}
             {sortBy !== "dueDate-asc" && (
               <Badge onRemove={() => setSortBy("dueDate-asc")} variant="default">
-                Sort: {sortOptions.find((option) => option.value === sortBy)?.label}
+                Sort: {activeSortLabel}
               </Badge>
             )}
             {!showCompleted && (
@@ -389,7 +394,8 @@ export default function Tasks() {
             }
             action={{
               label: tasks.length === 0 ? "Create Task" : "Clear Filters",
-              onClick: tasks.length === 0 ? () => setIsCreateModalOpen(true) : clearFilters,
+              onClick:
+                tasks.length === 0 ? () => setIsCreateModalOpen(true) : clearFilters,
             }}
           />
         )}

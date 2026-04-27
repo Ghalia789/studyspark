@@ -1,3 +1,4 @@
+import { Dispatch, SetStateAction } from 'react';
 import { useLocalStorage } from './useLocalStorage';
 
 export interface Task {
@@ -35,6 +36,6 @@ const DEFAULT_TASKS: Task[] = [
  * Custom hook for managing tasks with localStorage persistence
  * @returns [tasks, setTasks]
  */
-export function useTasks(): [Task[], (tasks: Task[]) => void] {
+export function useTasks(): [Task[], Dispatch<SetStateAction<Task[]>>] {
   return useLocalStorage<Task[]>('studyspark_tasks', DEFAULT_TASKS);
 }

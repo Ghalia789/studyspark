@@ -1,3 +1,4 @@
+import { Dispatch, SetStateAction } from 'react';
 import { useLocalStorage } from './useLocalStorage';
 
 export interface UserSettings {
@@ -18,6 +19,6 @@ const DEFAULT_SETTINGS: UserSettings = {
  * Custom hook for managing user settings with localStorage persistence
  * @returns [settings, setSettings]
  */
-export function useSettings(): [UserSettings, (settings: UserSettings) => void] {
+export function useSettings(): [UserSettings, Dispatch<SetStateAction<UserSettings>>] {
   return useLocalStorage<UserSettings>('studyspark_settings', DEFAULT_SETTINGS);
 }
