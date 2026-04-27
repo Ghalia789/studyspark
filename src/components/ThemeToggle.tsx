@@ -1,26 +1,28 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useEffect } from "react"
 import { Moon, Sun } from "lucide-react"
+import { useSettings } from "@/hooks"
 
 export default function ThemeToggle({ isExpanded }: { isExpanded: boolean }) {
-  const [dark, setDark] = useState(() => {
-    // Initialize from localStorage (client-side only)
-    if (typeof window === 'undefined') {
-      return false
-    }
-    return localStorage.getItem("theme") === "dark"
-  })
+  const [settings, setSettings] = useSettings()
+  const dark = settings.theme === "dark"
 
-  // Apply theme to DOM when component mounts
+  // Keep the document class in sync with the persisted theme setting.
   useEffect(() => {
     document.documentElement.classList.toggle("dark", dark)
   }, [dark])
 
   const toggleTheme = () => {
-    const newDark = !dark
-    setDark(newDark)
-    localStorage.setItem("theme", newDark ? "dark" : "light")
+    const nextTheme = dark ? "light" : "dark"
+
+    setSettings({
+      ...settings,
+      theme: nextTheme,
+    })
+
+    // Preserve the legacy key so older state still resolves correctly.
+    localStorage.setItem("theme", nextTheme)
   }
 
   return (
