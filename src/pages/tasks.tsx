@@ -11,38 +11,10 @@ import Select from "@/components/Select";
 import Badge from "@/components/Badge";
 import Alert from "@/components/Alert";
 import EmptyState from "@/components/EmptyState";
-
-interface Task {
-  id: string;
-  title: string;
-  description: string;
-  subject: string;
-  priority: "low" | "medium" | "high";
-  dueDate: string;
-  completed: boolean;
-}
+import { useTasks, type Task } from "@/hooks";
 
 export default function Tasks() {
-  const [tasks, setTasks] = useState<Task[]>([
-    {
-      id: "1",
-      title: "Complete Algebra Assignment",
-      description: "Solve problems 1-20 from Chapter 5",
-      subject: "Math",
-      priority: "high",
-      dueDate: "Feb 5, 2026",
-      completed: false,
-    },
-    {
-      id: "2",
-      title: "Read Biology Chapter 3",
-      description: "Focus on photosynthesis section",
-      subject: "Biology",
-      priority: "medium",
-      dueDate: "Feb 6, 2026",
-      completed: true,
-    },
-  ]);
+  const [tasks, setTasks] = useTasks();
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
