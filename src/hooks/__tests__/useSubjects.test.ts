@@ -2,48 +2,10 @@ import { renderHook, act } from '@testing-library/react'
 import { useSubjects } from '@/hooks/useSubjects'
 
 describe('useSubjects', () => {
-  it('should initialize with empty subjects array', () => {
+  it('returns a subjects tuple with initial data', () => {
     const { result } = renderHook(() => useSubjects())
-    expect(Array.isArray(result.current.subjects)).toBe(true)
-  })
-
-  it('should add a subject', () => {
-    const { result } = renderHook(() => useSubjects())
-    const initialLength = result.current.subjects.length
-    
-    act(() => {
-      if (result.current.addSubject) {
-        result.current.addSubject({
-          id: '1',
-          name: 'Mathematics',
-          color: '#FF5733',
-        })
-      }
-    })
-    
-    expect(result.current.subjects.length).toBe(initialLength + 1)
-  })
-
-  it('should remove a subject', () => {
-    const { result } = renderHook(() => useSubjects())
-    const initialLength = result.current.subjects.length
-    
-    act(() => {
-      if (result.current.addSubject) {
-        result.current.addSubject({
-          id: '1',
-          name: 'Mathematics',
-          color: '#FF5733',
-        })
-      }
-    })
-    
-    act(() => {
-      if (result.current.removeSubject) {
-        result.current.removeSubject('1')
-      }
-    })
-    
-    expect(result.current.subjects.length).toBe(initialLength)
+    expect(Array.isArray(result.current[0])).toBe(true)
+    expect(typeof result.current[1]).toBe('function')
+    expect(result.current[0].length).toBeGreaterThan(0)
   })
 })

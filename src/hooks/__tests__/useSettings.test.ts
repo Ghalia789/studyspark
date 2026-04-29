@@ -6,18 +6,9 @@ describe('useSettings', () => {
     localStorage.clear()
   })
 
-  it('should initialize with default settings', () => {
+  it('returns a settings tuple with theme data', () => {
     const { result } = renderHook(() => useSettings())
-    expect(result.current.settings).toBeDefined()
-  })
-
-  it('should return settings object with theme property', () => {
-    const { result } = renderHook(() => useSettings())
-    expect(result.current.settings).toHaveProperty('theme')
-  })
-
-  it('should have updateSettings function', () => {
-    const { result } = renderHook(() => useSettings())
-    expect(typeof result.current.updateSettings).toBe('function')
+    expect(result.current[0]).toHaveProperty('theme')
+    expect(typeof result.current[1]).toBe('function')
   })
 })
