@@ -115,6 +115,72 @@ docker run -p 3000:3000 --env-file .env -e PORT=3000 studyspark:latest
 - The repo ignores `.env` and `.env.local` files; provide runtime envs via `--env-file`, `-e`, or Docker secrets.
 - The Dockerfile uses the Next.js `standalone` output (see `next.config.ts`). The container runs `node server.js` from the standalone build.
 
+## DevOps Architecture
+
+```
+GitHub (dev branch)
+    │
+    ▼
+GitHub Actions (CI Pipeline)
+    ├── Lint (ESLint)
+    ├── Test
+    ├── Build (Next.js)
+    ├── SonarCloud Analysis
+    ├── Docker Build
+    ├── Trivy Security Scan
+    └── Push to Docker Hub
+         │
+         ▼
+    ArgoCD (GitOps)
+         │
+         ▼
+    Minikube (Kubernetes)
+    ├── Deployment (2 replicas)
+    └── Service (NodePort 30080)
+         │
+         ▼
+    Monitoring
+    ├── Prometheus (metrics collection)
+    └── Grafana (dashboards)
+```
+
+## CI/CD Pipeline
+
+The CI pipeline runs automatically on every push to `dev` and `main` branches via GitHub Actions.
+
+- **Lint & Test** — ESLint + placeholder test script
+- **SonarCloud** — static code analysis and quality gate
+- **Docker** — image built and pushed to `ghaliabellalouna/studyspark:latest`
+- **Trivy** — Docker image scanned for critical vulnerabilities
+
+## Kubernetes Deployment
+
+```bash
+# Apply manifests manually (only for testing)
+kubectl apply -f k8s/
+
+# Check pods
+kubectl get pods
+
+# Check services
+kubectl get services
+```
+
+ArgoCD automatically syncs the `k8s/` folder from the `dev` branch — no manual deployment needed.
+
+## Monitoring
+
+Prometheus and Grafana are deployed via Helm in the `monitoring` namespace.
+
+```bash
+# Access Grafana
+kubectl port-forward svc/monitoring-grafana -n monitoring 3001:80
+# Open http://localhost:3001
+
+# Access Prometheus
+kubectl port-forward svc/monitoring-kube-prometheus-prometheus -n monitoring 9090:9090
+# Open http://localhost:9090
+```
 
 ## Development
 
